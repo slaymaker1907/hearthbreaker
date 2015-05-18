@@ -1534,8 +1534,8 @@ class PintSizedSummoner(MinionCard):
         return Minion(2, 2, effects=[Effect(TurnStarted(), ActionTag(GiveAura(AuraUntil(ManaChange(-1),
                                                                                         CardSelector(
                                                                                             condition=IsMinion()),
-                                                                              MinionPlaced())),
-                                            PlayerSelector()))])
+                                                                                        MinionPlaced())),
+                                                                     PlayerSelector()))])
 
 
 class OldMurkEye(MinionCard):
@@ -1892,7 +1892,7 @@ class EchoingOoze(MinionCard):
         super().__init__("Echoing Ooze", 2, CHARACTER_CLASS.ALL, CARD_RARITY.EPIC,
                          battlecry=Battlecry(GiveEffect(Effect(TurnEnded(),
                                                                ActionTag(Duplicate(SelfSelector()), PlayerSelector()))),
-                                             PlayerSelector()))
+                                                        PlayerSelector()))
 
     def create_minion(self, player):
         return Minion(1, 2)

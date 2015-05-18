@@ -774,3 +774,21 @@ class TestPaladin(unittest.TestCase):
 
         self.assertEqual(0, len(game.players[0].minions))
         self.assertEqual(9, len(game.players[1].hand))
+
+    def test_DragonConsort(self):
+        game = generate_game_for([DragonConsort, Wisp], VolcanicDrake, OneCardPlayingAgent, OneCardPlayingAgent)
+        for turn in range(0, 10):
+            game.play_single_turn()
+
+        self.assertEqual(1, len(game.players[0].minions))
+        self.assertEqual(0, len(game.players[1].minions))
+        self.assertEqual(3, game.players[0].hand[1].mana_cost())  # Discount for other Consorts
+        self.assertEqual(6, game.players[1].hand[0].mana_cost())  # Not for enemy dragons
+
+        game.players[0].max_mana = 9
+        game.play_single_turn()  # This line is causing errors, not sure why.
+
+        self.assertEqual(2, len(game.players[0].minions))
+        self.assertEqual(0, len(game.players[1].minions))
+        self.assertEqual(3, game.players[0].hand[0].mana_cost())
+        self.assertEqual(10, game.players[0].mana)
