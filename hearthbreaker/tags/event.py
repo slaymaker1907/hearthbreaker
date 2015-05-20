@@ -90,6 +90,11 @@ class ArmorIncreased(PlayerEvent):
         super().__init__("armor_increased", condition, player)
 
 
+class CardDrawn(PlayerEvent):
+    def __init__(self, condition=None, player=FriendlyPlayer()):
+        super().__init__("card_drawn", condition, player)
+
+
 class Attack(MinionEvent):
     def __init__(self, condition=None):
         super().__init__("attack", condition)

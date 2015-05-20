@@ -1,4 +1,5 @@
 from hearthbreaker.cards.base import SpellCard, MinionCard
+from hearthbreaker.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE
 from hearthbreaker.game_objects import Minion
 from hearthbreaker.tags.action import Heal, Summon, Draw, \
     Kill, Damage, ResurrectFriendly, Steal, Duplicate, Give, SwapWithHand, AddCard, Transform, ApplySecret, \
@@ -11,12 +12,12 @@ from hearthbreaker.tags.condition import Adjacent, IsType, MinionHasDeathrattle,
     IsWeapon, HasStatus, AttackLessThanOrEqualTo, CardRarity, OneIn, NotCurrentTarget, HasDivineShield, HasSecret, \
     BaseAttackEqualTo, GreaterThan, And, TargetAdjacent, Matches, HasBattlecry, Not
 from hearthbreaker.tags.event import TurnEnded, CardPlayed, MinionSummoned, TurnStarted, DidDamage, AfterAdded, \
-    SpellCast, CharacterHealed, CharacterDamaged, MinionDied, CardUsed, Damaged, Attack, CharacterAttack, MinionPlaced
+    SpellCast, CharacterHealed, CharacterDamaged, MinionDied, CardUsed, Damaged, Attack, CharacterAttack, \
+    MinionPlaced, CardDrawn
 from hearthbreaker.tags.selector import MinionSelector, BothPlayer, SelfSelector, \
     PlayerSelector, TargetSelector, EnemyPlayer, CharacterSelector, WeaponSelector, \
     HeroSelector, OtherPlayer, UserPicker, RandomPicker, CurrentPlayer, Count, Attribute, CardSelector, \
     Difference, LastDrawnSelector, RandomAmount, DeadMinionSelector
-from hearthbreaker.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE
 from hearthbreaker.tags.status import ChangeAttack, ChangeHealth, Charge, Taunt, Windfury, CantAttack, \
     SpellDamage, DoubleDeathrattle, Frozen, ManaChange, DivineShield, MegaWindfury
 import hearthbreaker.targeting
@@ -2525,3 +2526,12 @@ class DragonEgg(MinionCard):
 
     def create_minion(self, player):
         return Minion(0, 2, effects=[Effect(Damaged(), ActionTag(Summon(BlackWhelp()), PlayerSelector()))])
+
+
+class Chromaggus(MinionCard):
+    def __init__(self):
+        super().__init__("Chromaggus", 8, CHARACTER_CLASS.ALL, CARD_RARITY.LEGENDARY, minion_type=MINION_TYPE.DRAGON)
+
+    def create_minion(self, player):
+        return Minion(6, 8, effects=[Effect(CardDrawn(), ActionTag(AddCard(CardQuery(source=CARD_SOURCE.LAST_CARD)),
+                                                                   PlayerSelector()))])

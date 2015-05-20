@@ -4664,3 +4664,52 @@ class TestCommon(unittest.TestCase, TestUtilities):
         self.assertEqual(1, game.players[1].minions[1].health)
         self.assertEqual(2, game.players[1].minions[2].calculate_attack())
         self.assertEqual(1, game.players[1].minions[2].health)
+
+    def test_Chromaggus(self):
+        game = generate_game_for([Chromaggus, FarSight], Wisp,
+                                 OneCardPlayingAgent, DoNothingAgent)
+
+        game.players[0].max_mana = 2
+
+        for turn in range(0, 12):
+            game.play_single_turn()
+
+        self.assertEqual(8, len(game.players[0].hand))
+        self.assertEqual(1, len(game.players[0].minions))
+        self.assertEqual(0, len(game.players[1].minions))
+        self.assertEqual("Far Sight", game.players[0].hand[0].name)
+        self.assertEqual("Chromaggus", game.players[0].hand[1].name)
+        self.assertEqual("Far Sight", game.players[0].hand[2].name)
+        self.assertEqual("Chromaggus", game.players[0].hand[3].name)
+        self.assertEqual("Far Sight", game.players[0].hand[4].name)
+        self.assertEqual("Chromaggus", game.players[0].hand[5].name)
+        self.assertEqual("Far Sight", game.players[0].hand[6].name)
+        self.assertEqual("Chromaggus", game.players[0].hand[7].name)
+
+        game.play_single_turn()  # Draw double, Far Sight, draw double but only first discounted
+
+        self.assertEqual(10, len(game.players[0].hand))
+        self.assertEqual("Chromaggus", game.players[0].hand[0].name)
+        self.assertEqual(8, game.players[0].hand[0].mana_cost())
+        self.assertEqual("Far Sight", game.players[0].hand[1].name)
+        self.assertEqual(3, game.players[0].hand[1].mana_cost())
+        self.assertEqual("Chromaggus", game.players[0].hand[2].name)
+        self.assertEqual(8, game.players[0].hand[2].mana_cost())
+        self.assertEqual("Far Sight", game.players[0].hand[3].name)
+        self.assertEqual(3, game.players[0].hand[3].mana_cost())
+        self.assertEqual("Chromaggus", game.players[0].hand[4].name)
+        self.assertEqual(8, game.players[0].hand[4].mana_cost())
+        self.assertEqual("Far Sight", game.players[0].hand[5].name)
+        self.assertEqual(3, game.players[0].hand[5].mana_cost())
+        self.assertEqual("Chromaggus", game.players[0].hand[6].name)  # These are all old so far
+        self.assertEqual(8, game.players[0].hand[6].mana_cost())
+        self.assertEqual("Far Sight", game.players[0].hand[7].name)  # Where is the 2nd Far Sight, drat
+        self.assertEqual(3, game.players[0].hand[7].mana_cost())
+        self.assertEqual("Chromaggus", game.players[0].hand[9].name)
+        self.assertEqual(5, game.players[0].hand[9].mana_cost())
+        self.assertEqual("Chromaggus", game.players[0].hand[8].name)  # So just like last time Far Sight some how finishes before 1st draw
+        self.assertEqual(8, game.players[0].hand[8].mana_cost())
+
+        game.play_single_turn()  # Coldlight gives you 2 then doubles them
+
+        self.assertEqual(10, len(game.players[0].hand))
