@@ -254,13 +254,21 @@ class HearthDatabase:
                     where Game.setname = "{0}" and Deck.grouping <> "{1}"
                     group by Game.winid having
                     1.0*count(*)/(select count(*) from Game as g where g.player1=Game.winid or g.player2=Game.winid)
-                     = (select max(1.0*c/all) from (
-                    select count(*) as c
+                     = (select max(1.0*won/(p1count + p2count) from (
+                    select count(*) as won, game2.winid as winid
                     from Game as game2 INNER JOIN Deck as deck2 on game2.winid = deck2.rowid
                     where game2.setname = "{0}" and deck2.grouping <> "{1}"
-                    group by game2.winid) as f,(
-                        select count(*) from
-                    ) as g)'''.format(gameset, not_group)
+                    group by game2.winid) as f, (
+                        select count(*) as p1count, player1 as p1 from Game as game3 
+                        INNER JOIN Deck as deck3 on game3.player1 = deck3.rowid
+                        group by game3.player1, game3.setname, deck3.grouping
+                        having game3.setname="{0}" and deck3.grouping<>"{1}"
+                    ) as g,
+                    (select count(*) as p2count, player2 as p2 from Game as game4
+                    INNER JOIN Deck as deck4 on game4.player2=deck4.rowid
+                    group by game4.player2, game4.setname, deck4.grouping
+                    having game4.setname="{0}" and deck4.grouping<>"{1}"
+                    ) as h) where p1=p2'''.format(gameset, not_group)
         return self.execute(command)[0][0]
 
 
@@ -352,9 +360,9 @@ class HearthDatabase:
                 link = None
         '''
 
-#database = HearthDatabase('database.sqlite')
+database = HearthDatabase('database.sqlite')
 #database.init_all()
 #database.parse_hearthpwn_decks()
-#best_decks = database.best_decks('mutational', 'hearthpwn')
-#print([database.get_deck(did) for did in best_decks])
+best_decks = database.best_decks('mutational', 'hearthpwn')
+print([database.get_deck(did) for did in best_decks])
 #print(len(database.random_deck('hearthpwn')[0]))
