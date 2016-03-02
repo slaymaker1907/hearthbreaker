@@ -165,8 +165,7 @@ class HearthDatabase:
         create_game = '''create table 'Game'
                         (
                         setname VARCHAR(255) NOT NULL,
-                        player1 INT NOT NULL,
-                        player2 INT NOT NULL,
+                        loserid INT NOT NULL,
                         winid INT NOT NULL,
                         foreign key (winid) references Deck(id),
                         foreign key (player1) references Deck(id),
@@ -244,31 +243,23 @@ class HearthDatabase:
         result = self.execute(command, char_class)
         return self.format_deck(result[0]), int(result[1][0][0])
 
-    def create_game(self, setname, deck1, deck2, winid):
-        command = '''insert into Game (setname, player1, player2, winid)
-                    values ("{0}", {1}, {2}, {3})'''.format(setname, deck1, deck2, winid)
+    def create_game(self, setname, winid, loserid):
+        command = '''insert into Game (setname, winid, loserid)
+                    values ("{0}", {1}, {2})'''.format(setname, winid, loserid)
         self.execute(command)
 
     def best_decks(self, gameset, not_group):
-        command = '''select Game.winid from Game inner join Deck on Game.winid = Deck.rowid
-                    where Game.setname = "{0}" and Deck.grouping <> "{1}"
-                    group by Game.winid having
-                    1.0*count(*)/(select count(*) from Game as g where g.player1=Game.winid or g.player2=Game.winid)
-                     = (select max(1.0*won/(p1count + p2count) from (
-                    select count(*) as won, game2.winid as winid
-                    from Game as game2 INNER JOIN Deck as deck2 on game2.winid = deck2.rowid
-                    where game2.setname = "{0}" and deck2.grouping <> "{1}"
-                    group by game2.winid) as f, (
-                        select count(*) as p1count, player1 as p1 from Game as game3 
-                        INNER JOIN Deck as deck3 on game3.player1 = deck3.rowid
-                        group by game3.player1, game3.setname, deck3.grouping
-                        having game3.setname="{0}" and deck3.grouping<>"{1}"
-                    ) as g,
-                    (select count(*) as p2count, player2 as p2 from Game as game4
-                    INNER JOIN Deck as deck4 on game4.player2=deck4.rowid
-                    group by game4.player2, game4.setname, deck4.grouping
-                    having game4.setname="{0}" and deck4.grouping<>"{1}"
-                    ) as h) where p1=p2'''.format(gameset, not_group)
+        command = '''select id from (select 1.0*wins/(wins+losses) as ratio, winid, gameset
+                     from (select COUNT(*) as wins, winid, setname as gameset from Game group by winid, setname) as wintable
+                     INNER JOIN (select COUNT(*) as losses, loserid from Game group by loserid) as losstable
+                     ON winid=loserid) as maintable, Deck
+                     where maintable.winid = Deck.rowid and gameset="{0}" and Deck.grouping<>"{1}"
+                     group by
+                    (select MAX(ratio2) from (select 1.0*wins/(wins+losses) as ratio2
+                     from (select COUNT(*) as wins, Game.setname as gameset2, winid from Game group by winid) as wintable
+                     INNER JOIN (select COUNT(*) as losses, loserid from Game group by loserid) as losstable
+                     ON winid=loserid, Deck 
+                     where gameset2="{0}" and Deck.grouping="{1}" and Deck.rowid=winid) as temp)'''.format(gameset, not_group)
         return self.execute(command)[0][0]
 
 
@@ -292,10 +283,12 @@ class HearthDatabase:
         return deck
 
     def get_deck_performance(self, deckid):
-        total_games = '''select COUNT(*) from Game where player1={0} or player2={0}'''.format(deckid)
-        won_games = '''select COUNT(*) from Game where winid={0}'''.format(deckid)
-        result = self.execute(total_games, won_games)
-        return result[1][0][0] / result[0][0][0]
+        command = '''select 1.0*wins/(wins+losses) 
+                     from (select COUNT(*) as wins, winid from Game group by winid) as wintable
+                     INNER JOIN (select COUNT(*) as losses, loserid from Game group by loserid) as losstable
+                     ON winid=loserid where loserid={0}'''.format(deckid)
+        pdb.set_trace()
+        return self.execute(command)[0]
 
     def cards_for_class(self, char_class):
         return self.execute_one('select rowid, name, mana, rare, class from Card where class=0 or class={0}'.format(char_class))
